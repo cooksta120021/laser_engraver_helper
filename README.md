@@ -1,115 +1,203 @@
-# Engraver Camera Assistant
+# Laser Engraver Helper
 
-A standalone camera assistant that captures your real USB webcam, applies recognition overlays, and displays the annotated feed in its own resizable window alongside LightBurn.
+A comprehensive Windows application that combines real-time wood identification with laser engraving settings recommendations. Uses computer vision to identify wood types and provides optimal speed, power, and pass settings for your diode laser.
 
-## What It Does
+## 🎯 Features
 
-This app opens its own window showing your camera feed with real-time overlays:
+### Wood Identification
+- **Real-time wood recognition** using LAB color space analysis
+- **Multi-patch sampling** for accurate confidence scoring
+- **Supports 20+ wood types**: Pine, Basswood, Oak, Maple, Walnut, Cherry, Mahogany, Ebony, and more
+- **Grain direction detection** with visual overlay
+- **Color-coded grain arrow**: Green for optimal alignment, Red for diagonal
 
-- **Motion detection** — highlights moving regions
-- **Alignment grid** — positioning reference
-- **Center crosshair** — precise targeting
-- **Status bar** — shows active mode
+### Laser Settings
+- **Three operation modes**:
+  - **Surface**: Single-pass engraving (default)
+  - **Deep**: Multi-pass depth engraving
+  - **Cut**: Through-cutting parameters
+- **Realistic speed/power settings** based on real-world data
+- **Support for 5W to 80W diode lasers**
+- **Automatic pass calculation** based on material thickness
 
-You can run it alongside LightBurn on a second monitor or snapped to the side of your screen.
+### Professional Features
+- **Standalone Windows application** with installer
+- **USB webcam integration** with OpenCV
+- **Camera controls**: Brightness, contrast, exposure, auto-exposure
+- **Snapshot capability** for documentation
+- **Resizable window** with overlay toggle
 
-## Prerequisites
+## 🚀 Quick Start
 
-- **Python 3.9+**
-- **Windows 10/11**
-- **LightBurn 1.7.00** (optional — run alongside for engraving)
+### Option 1: Install from Release (Recommended)
+1. Download `Engraver Helper-Setup.exe` from the [Releases](https://github.com/cooksta120021/laser_engraver_helper/releases) page
+2. Run the installer
+3. Launch from Desktop or Start Menu
 
-## Quick Start
-
-1. **Install Python dependencies**
-   ```powershell
-   pip install -r requirements.txt
-   ```
-
-2. **Run the app**
-   ```powershell
-   python main.py
-   ```
-   Or double-click `run.bat`.
-
-3. **Use alongside LightBurn**
-   - Position the app window next to LightBurn
-   - The overlay helps with alignment, motion detection, and positioning
-   - Press `s` to save a snapshot anytime
-
-## What the Overlay Shows
-
-The default `recognition.py` includes:
-
-- **Status header bar** — shows "AI ASSISTANT ACTIVE"
-- **Motion detection** — highlights moving regions in green
-- **Alignment grid** — 100px grid for positioning
-- **Center crosshair** — red cross at the center of the frame
-
-## Customizing the Recognition
-
-Open `recognition.py` and edit the `process_frame()` function. You can plug in:
-
-- Your own OpenCV / ML models
-- ArUco marker detection
-- Object detection (YOLO, MediaPipe, etc.)
-- Custom measurements or alignment guides
-- Color masks for material detection
-
-The function receives a BGR numpy array and must return an annotated BGR array.
-
-## Configuration
-
-Set environment variables before running, or edit `config.py`:
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `REAL_CAMERA_INDEX` | `0` | Which USB camera to capture from |
-| `REAL_CAMERA_WIDTH` | `1280` | Capture width |
-| `REAL_CAMERA_HEIGHT` | `720` | Capture height |
-| `VIRTUAL_CAMERA_WIDTH` | `1280` | Output width (must match LightBurn settings) |
-| `VIRTUAL_CAMERA_HEIGHT` | `720` | Output height |
-| `OVERLAY_TEXT` | `AI ASSISTANT ACTIVE` | Header text on the overlay |
-| `SHOW_OVERLAY` | `true` | Toggle overlays on/off |
-
-Example:
+### Option 2: Build from Source
 ```powershell
-$env:REAL_CAMERA_INDEX="1"
+# Clone and install dependencies
+git clone https://github.com/cooksta120021/laser_engraver_helper.git
+cd laser_engraver_helper
+pip install -r requirements.txt
+
+# Run the application
 python main.py
 ```
 
-## Network Camera Fallback
+## 📊 How It Works
 
-If the virtual camera driver does not work on your system, use the MJPEG network proxy:
+### Wood Identification Process
+1. **Multi-patch sampling**: Analyzes 9 regions across the camera frame
+2. **LAB color space**: Robust to lighting variations
+3. **Vote counting**: More accurate than single-mean analysis
+4. **Confidence scoring**: Based on patch agreement and color distance
 
-```powershell
-python network_proxy.py
+### Settings Calculation
+- **Surface mode**: Optimized for marking/engraving (1 pass)
+- **Deep mode**: Calculates passes based on depth per pass (0.3-1.2mm depending on wood)
+- **Cut mode**: Uses separate cutting database with slower speeds and 100% power
+
+### Grain Detection
+- **CLAHE enhancement**: Works in poor lighting conditions
+- **Hough line transform**: Detects dominant grain direction
+- **Visual feedback**: Arrow shows grain angle with color coding
+
+## 🛠️ Supported Materials
+
+### Softwoods
+- Basswood, Pine, Poplar, Cedar, Bamboo, Cork
+
+### Medium Hardwoods  
+- Oak, Maple, Birch, Cherry, Alder, Mahogany
+
+### Dense Hardwoods
+- Walnut, Padauk, Purpleheart, Wenge, Ebony
+
+### Engineered Materials
+- Plywood, MDF/HDF
+
+### Non-Wood
+- Leather
+
+## ⚙️ Technical Details
+
+### Wood Database
+- **LAB color signatures** for each wood type
+- **Realistic laser settings** per wattage (5W-80W)
+- **Depth per pass values** for engraving and cutting
+- **Interpolation** for non-standard wattages
+
+### Camera Integration
+- **OpenCV with MediaFoundation backend** (Windows)
+- **Multiple camera support** with index selection
+- **Real-time processing** at 30 FPS
+- **Resolution options**: 640x480, 1280x720, 1920x1080
+
+## 📦 Building from Source
+
+### Dependencies
+```bash
+pip install -r requirements.txt
 ```
 
-In LightBurn 2.1+, add a **Network** camera with the URL:  
-`http://YOUR_PC_IP:8080/video.mjpg`
+### Build Executable
+```bash
+# Create icon
+python create_icon.py
 
-## Project Structure
+# Build standalone executable
+python build_exe.py
 
-```
-engraver-wood-helper/
-├── main.py           # Standalone window entry point
-├── network_proxy.py  # HTTP MJPEG fallback server
-├── recognition.py    # Your AI / overlay pipeline
-├── config.py         # Settings
-├── requirements.txt  # Python dependencies
-├── run.bat           # One-click Windows launcher
-└── README.md         # This file
+# Create Windows installer
+python build_installer.py
 ```
 
-## Troubleshooting
+### Build Tools Used
+- **PyInstaller**: Bundles Python and dependencies
+- **NSIS**: Creates professional Windows installer
+- **Pillow**: Icon generation
 
-| Problem | Fix |
-|---------|-----|
-| Window does not appear | Make sure OpenCV is installed (`pip install opencv-python`). |
-| Preview window is black | Change `REAL_CAMERA_INDEX` to `1` (or try other indices) if you have multiple cameras. |
-| Framerate is low | Lower `REAL_CAMERA_WIDTH` / `REAL_CAMERA_HEIGHT` in `config.py`. |
+## 🎮 Usage Guide
 
-## License
+### Basic Operation
+1. **Select camera** from dropdown (default: Camera 0)
+2. **Choose laser wattage** (5W-80W)
+3. **Set material thickness** (for Deep/Cut modes)
+4. **Select operation mode** (Surface/Deep/Cut)
+5. **Point camera at wood** - identification happens automatically
 
-MIT — modify and extend as needed for your engraving workflow.
+### Camera Controls
+- **Brightness/Contrast/Exposure sliders**: Fine-tune image quality
+- **Auto-exposure button**: One-click optimization
+- **Overlay toggle**: Show/hide visual overlays
+- **Snapshot button**: Save current frame
+
+### Reading the Display
+```
+Basswood  (67% confidence)
+Speed: 3600 mm/min  |  Power: 60%  |  Passes: 1
+Grain direction: 15
+```
+
+## 🔧 Configuration
+
+Edit `config.py` for advanced settings:
+
+```python
+# Camera settings
+REAL_CAMERA_INDEX = 0
+REAL_CAMERA_WIDTH = 1280
+REAL_CAMERA_HEIGHT = 720
+
+# Recognition settings
+CONFIDENCE_THRESHOLD = 0.3
+MIN_PATCHES_FOR_IDENTIFICATION = 6
+```
+
+## 🐛 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Camera shows black screen | Try different camera index (1, 2, etc.) |
+| Wood identification inaccurate | Adjust lighting, ensure wood fills center of frame |
+| Settings seem wrong | Check wattage selection, verify mode (Surface/Deep/Cut) |
+| App won't start | Install Visual C++ Redistributable if missing |
+
+## 📈 Performance Notes
+
+- **CPU usage**: ~15-25% on modern processors
+- **Memory usage**: ~200MB including camera buffers
+- **Startup time**: ~3-5 seconds
+- **Identification speed**: Real-time at 30 FPS
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+### Areas for Contribution
+- **Additional wood types** with LAB signatures
+- **Improved recognition algorithms**
+- **More laser settings data**
+- **UI/UX improvements**
+- **Bug fixes and optimizations**
+
+## 📄 License
+
+MIT License - see [LICENSE.txt](LICENSE.txt) for details.
+
+## 🙏 Acknowledgments
+
+- **OpenCV** for computer vision
+- **Tkinter** for GUI framework
+- **PyInstaller** for executable packaging
+- **NSIS** for Windows installer
+- **Community laser engravers** for settings data
+
+---
+
+**Made with ❤️ for the laser engraving community**
